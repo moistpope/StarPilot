@@ -27,6 +27,7 @@ from openpilot.selfdrive.car.cruise import (
   is_speed_limit_confirmation_pending,
 )
 from openpilot.selfdrive.car.redneck_cruise import RedneckCruise, select_redneck_target_speed
+from openpilot.selfdrive.car.can_overrides import CanOverrides, OverrideStore
 from openpilot.selfdrive.car.car_specific import MockCarState
 
 from openpilot.starpilot.common.favorite_slots import (
@@ -219,6 +220,12 @@ class Car:
       safety_config = structs.CarParams.SafetyConfig()
       safety_config.safetyModel = structs.CarParams.SafetyModel.noOutput
       self.CP.safetyConfigs = [safety_config]
+
+    # CAN signal overrides (e.g. Fisker ICC settings relays), editable from the web HUD
+    self.can_overrides = None if self.CP.passive else CanOverrides.for_brand(self.CP.brand)
+    self.can_override_store = OverrideStore()
+    if self.can_overrides is not None:
+      self.can_overrides.poll(self.can_override_store)
 
     # Write previous route's CarParams
     prev_cp = self.params.get("CarParamsPersistent")
@@ -621,6 +628,8 @@ class Car:
         experimental_mode_available(self.CP) and
         not self.safe_mode
       )
+      if self.can_overrides is not None:
+        self.can_overrides.poll(self.can_override_store)
       time.sleep(0.1)
 
   def card_thread(self):
