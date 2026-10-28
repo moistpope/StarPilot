@@ -66,9 +66,18 @@ the device goes offroad when the car turns off.
    carries over. Otherwise the first onroad start tries the UDS read. Check the logs for
    `Fisker SecOC key verified against GW sync MAC` before you expect steering.
 
+## Oceanfront View (web HUD)
+
+The bridge for [Oceanfront View](https://github.com/moistpope/oceanfront-view), the HUD on the Ocean's own
+screen, is in `starpilot/system/webhud` (process `webhud`, port 8088, `http://starpilot.local:8088`). The
+Oceanfront View app finds it on the hotspot like it finds the sunnypilot one, with no app change. It streams the
+ADAS and radar buses and openpilot's services, replays routes, and edits the ICC_0x52A/ICC_0x35B CAN overrides
+live (card applies them within 100 ms). StarPilot can't add params in a prebuilt tree, so the overrides are kept
+in `/data/fisker/can_overrides.json`. See `starpilot/system/webhud/README.md` for what differs from the
+sunnypilot bridge.
+
 ## Not ported (sunnypilot-only)
 
-- Web HUD / Oceanfront View bridge, the live CAN-override editor (`FiskerCanOverrides`)
 - Phone remote-control steering
 - The `FiskerACCAutoSpeed`, `FiskerACCTerrain`, and `FiskerLateralType` UI toggles. Their
   baseline defaults are used (auto speed on, terrain off, LKA lateral type). They can be set

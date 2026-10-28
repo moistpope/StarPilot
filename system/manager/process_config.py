@@ -221,6 +221,9 @@ procs += [
   PythonProcess("wheel_controlsd", "starpilot.system.wheel_controls.wheel_controlsd", wheel_controls_enabled, enabled=TICI, nice=19),
   PythonProcess("the_galaxy", "starpilot.system.the_galaxy.the_galaxy", always_run, nice=10),
   PythonProcess("galaxy", "starpilot.system.galaxy.galaxy", always_run, nice=10),
+  # Oceanfront View bridge for the Fisker Ocean's own screen (http://starpilot.local:8088). Always on: a
+  # prebuilt tree can't add an enable param, and it stops reading the bus once no viewer is connected.
+  PythonProcess("webhud", "starpilot.system.webhud.server", always_run),
 ]
 
 device_type = HARDWARE.get_device_type()
