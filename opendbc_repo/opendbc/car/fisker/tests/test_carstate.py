@@ -7,7 +7,7 @@ import pytest
 
 from cereal import custom
 from opendbc.can import CANPacker
-from opendbc.car import Bus
+from opendbc.car import Bus, structs
 from opendbc.car.common.conversions import Conversions as CV
 from opendbc.car.fisker.carstate import CarState
 from opendbc.car.fisker.interface import CarInterface
@@ -85,6 +85,27 @@ def test_cruise_state_from_vcu_basic_cruise(vcu_state):
   assert not ret.cruiseState.standstill
   if available:
     assert ret.cruiseState.speed == pytest.approx(55 * CV.MPH_TO_MS)
+
+
+@pytest.mark.parametrize("value,fires", [(1, False), (2, True)])
+def test_lkas_button_long_press_only(value, fires):
+  # MFS_RiBtnSouth: 1 = short press, which the car keeps for the ACC follow distance; 2 = long press,
+  # the Always On Lateral toggle (panda's lkas_on uses the same predicate)
+  CP = CarInterface.get_non_essential_params(CAR.FISKER_OCEAN)
+  CS = CarState(CP, custom.StarPilotCarParams.new_message())
+  parsers = CS.get_can_parsers(CP)
+  packer = CANPacker(DBC[CAR.FISKER_OCEAN][Bus.pt])
+
+  events = []
+  for v in (0, value, 0):
+    msg = packer.make_can_msg("MFS_0x514", CANBUS.pt, {"MFS_RiBtnSouth": v})
+    for cp in parsers.values():
+      cp.update([(0, [msg])])
+    ret, _ = CS.update(parsers, None)
+    events += [(e.type, e.pressed) for e in ret.buttonEvents]
+
+  lkas = structs.CarState.ButtonEvent.Type.lkas
+  assert events == ([(lkas, True), (lkas, False)] if fires else [])
 
 
 def _feed_1d0(cs, parsers, packer, frames):
